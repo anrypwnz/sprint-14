@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const app = express();
 const cards = require('./routes/cards.js');
 const users = require('./routes/users.js');
+const auth = require('./middlewares/auth');
+const { createUser, login } = require('./controller/users.js');
 
 const { PORT = 3000 } = process.env;
 
@@ -21,6 +23,11 @@ mongoose.connection.on('error', (err) => {
   process.exit(1);
 });
 
+app.post('/signin', login);
+app.post('/signup', createUser);
+
+app.use(auth);
+
 app.use((req, res, next) => {
   req.user = {
     _id: '5f02ce1cd6f2bb4c3ca41cb0',
@@ -29,6 +36,7 @@ app.use((req, res, next) => {
 });
 app.use(cards);
 app.use(users);
+
 app.all('*', (req, res, next) => {
   res.status(404).send({ 'message': 'Запрашиваемый ресурс не найден' });
   next();
