@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken');
 const Card = require('../models/card.js');
 
 module.exports.getCard = (req, res) => {
@@ -7,12 +8,20 @@ module.exports.getCard = (req, res) => {
 };
 
 module.exports.delCard = async (req, res) => {
+  const token = req.headers.authorization.replace('Bearer ', '');
+  let payload;
+
   try {
-    const card = await Card.findByIdAndRemove(req.params.id);
+    payload = jwt.verify(token, 'secret-key');
+    const card = await Card.findById(req.params.id);
     if (card == null) {
-      res.status(404).send('Card not found');
-    } else {
+      res.status(404).send('Карточка не найдена');
+    // eslint-disable-next-line eqeqeq
+    } else if (payload._id == card.owner) {
+      card.remove();
       res.status(200).send({ 'deleted_card': card });
+    } else {
+      res.status(403).send('У вас нет прав на удаление этой карточки');
     }
   } catch (err) {
     res.status(500).send({ message: err });
