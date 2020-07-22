@@ -1,25 +1,28 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const { NODE_ENV, JWT_SECRET } = process.env;
 const User = require('../models/user.js');
 
-module.exports.createUser = ((req, res) => {
+module.exports.createUser = (req, res) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
   User.find({ email }).then((data) => {
     if (data.length !== 0) {
-      res.status(401).send('Пользователь с таким Email уже существует');
+      res.status(409).send({ message: 'Пользователь с таким Email уже существует' });
+    } else if (!password) {
+      res.status(418).send({ message: 'Неподходящий пароль' });
     } else {
       bcrypt.hash(password, 10)
         .then((hash) => User.create({
           name, about, avatar, email, password: hash,
         }))
-        .then((user) => res.send(user))
+        .then((user) => res.send(`Пользователь ${user.name} с почтой ${user.email} успешно зарегистрирован.`))
         .catch((e) => res.status(400).send(e));
     }
   });
-});
+};
 
 module.exports.getUser = (req, res) => {
   User.findById(req.params.id)
@@ -27,10 +30,10 @@ module.exports.getUser = (req, res) => {
       if (user != null) {
         res.send({ user });
       } else {
-        res.status(404).send('Нет такого пользователя');
+        res.status(404).send({ message: 'Нет такого пользователя' });
       }
     })
-    .catch((err) => res.status(500).send({ err, message: 'Произошла ошибка' }));
+    .catch((err) => res.status(400).send({ err, message: 'Произошла ошибка' }));
 };
 
 module.exports.getUsers = async (req, res) => {
@@ -46,7 +49,7 @@ module.exports.login = (req, res) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, 'secret-key', { expiresIn: '7d' });
+      const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
       res.send({ token });
     })
     .catch((err) => {
