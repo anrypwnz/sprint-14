@@ -24,11 +24,11 @@ module.exports.delCard = async (req, res) => {
   }
 };
 
-module.exports.createCard = async (req, res) => {
+module.exports.createCard = (req, res) => {
   const {
     name, link,
   } = req.body;
-  await Card.create({
+  Card.create({
     name, link, owner: req.user._id, likes: [],
   })
     .then((data) => res.send({ data }))
