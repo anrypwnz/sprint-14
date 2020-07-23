@@ -11,6 +11,8 @@ module.exports.createUser = (req, res) => {
   User.find({ email }).then((data) => {
     if (data.length !== 0) {
       res.status(409).send({ message: 'Пользователь с таким Email уже существует' });
+    } else if (!name || !about || !avatar) {
+      res.status(418).send({ message: 'Неподходящие данные' });
     } else if (!password) {
       res.status(418).send({ message: 'Неподходящий пароль' });
     } else {
