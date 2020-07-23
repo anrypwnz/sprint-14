@@ -12,9 +12,9 @@ module.exports.createUser = (req, res) => {
     if (data.length !== 0) {
       res.status(409).send({ message: 'Пользователь с таким Email уже существует' });
     } else if (!name || !about || !avatar) {
-      res.status(418).send({ message: 'Неподходящие данные' });
+      res.status(400).send({ message: 'Неподходящие данные' });
     } else if (!password) {
-      res.status(418).send({ message: 'Неподходящий пароль' });
+      res.status(400).send({ message: 'Неподходящий пароль' });
     } else {
       bcrypt.hash(password, 10)
         .then((hash) => User.create({
