@@ -20,7 +20,7 @@ module.exports.delCard = async (req, res) => {
       res.status(403).send({ message: 'У вас нет прав на удаление этой карточки' });
     }
   } catch (err) {
-    res.status(500).send({ message: err });
+    res.status(400).send({ message: err.message });
   }
 };
 
@@ -32,5 +32,5 @@ module.exports.createCard = (req, res) => {
     name, link, owner: req.user._id, likes: [],
   })
     .then((data) => res.send({ data }))
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch((err) => res.status(400).send({ message: err.message }));
 };

@@ -15,10 +15,10 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useUnifiedTopology: true,
 });
 mongoose.connection.once('open', () => {
-  console.log('### successful connection to db');
+  console.log('Successful connection to mestodb');
 });
 mongoose.connection.on('error', (err) => {
-  console.log('### error', err);
+  console.log('error', err);
   process.exit(1);
 });
 app.use(cards);
