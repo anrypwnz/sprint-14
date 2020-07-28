@@ -8,24 +8,29 @@ module.exports.getCard = (req, res) => {
 
 module.exports.delCard = async (req, res) => {
   try {
-    const card = await Card.findByIdAndRemove(req.params.id);
+    const card = await Card.findById(req.params.id);
     if (card == null) {
-      res.status(404).send('Card not found');
+      res.status(404).send({ message: 'Карточка не найдена' });
+    // eslint-disable-next-line eqeqeq
+    } else if (req.user._id == card.owner) {
+      card.remove().then((deleted) => {
+        res.status(200).send({ deleted });
+      });
     } else {
-      res.status(200).send({ 'deleted_card': card });
+      res.status(403).send({ message: 'У вас нет прав на удаление этой карточки' });
     }
   } catch (err) {
-    res.status(500).send({ message: err });
+    res.status(400).send({ message: err.message });
   }
 };
 
-module.exports.createCard = async (req, res) => {
+module.exports.createCard = (req, res) => {
   const {
     name, link,
   } = req.body;
-  await Card.create({
+  Card.create({
     name, link, owner: req.user._id, likes: [],
   })
     .then((data) => res.send({ data }))
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch((err) => res.status(400).send({ message: err.message }));
 };

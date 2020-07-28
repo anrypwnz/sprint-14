@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 
@@ -14,24 +15,18 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useUnifiedTopology: true,
 });
 mongoose.connection.once('open', () => {
-  console.log('### successful connection to db');
+  console.log('Successful connection to mestodb');
 });
 mongoose.connection.on('error', (err) => {
-  console.log('### error', err);
+  console.log('error', err);
   process.exit(1);
-});
-
-app.use((req, res, next) => {
-  req.user = {
-    _id: '5f02ce1cd6f2bb4c3ca41cb0',
-  };
-  next();
 });
 app.use(cards);
 app.use(users);
+
 app.all('*', (req, res, next) => {
   res.status(404).send({ 'message': 'Запрашиваемый ресурс не найден' });
   next();
 });
 
-app.listen(PORT);
+app.listen(PORT, () => console.log('Connected to port:', PORT));

@@ -1,17 +1,29 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+const { NODE_ENV, JWT_SECRET } = process.env;
 const User = require('../models/user.js');
 
-module.exports.createUser = async (req, res) => {
-  const { name, about, avatar } = req.body;
-  try {
-    const created = await User.create({ name, about, avatar });
-    if (created) {
-      res.send('created well');
+module.exports.createUser = (req, res) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+  User.find({ email }).then((data) => {
+    if (data.length !== 0) {
+      res.status(409).send({ message: 'Пользователь с таким Email уже существует' });
+    } else if (!name || !about || !avatar) {
+      res.status(400).send({ message: 'Неподходящие данные' });
+    } else if (!password) {
+      res.status(400).send({ message: 'Неподходящий пароль' });
     } else {
-      res.status(500).send('create error');
+      bcrypt.hash(password, 10)
+        .then((hash) => User.create({
+          name, about, avatar, email, password: hash,
+        }))
+        .then((user) => res.send(`Пользователь ${user.name} с почтой ${user.email} успешно зарегистрирован.`))
+        .catch((e) => res.status(400).send(e));
     }
-  } catch (e) {
-    res.status(500).send(e);
-  }
+  });
 };
 
 module.exports.getUser = (req, res) => {
@@ -20,10 +32,10 @@ module.exports.getUser = (req, res) => {
       if (user != null) {
         res.send({ user });
       } else {
-        res.status(404).send('Нет такого пользователя');
+        res.status(404).send({ message: 'Нет такого пользователя' });
       }
     })
-    .catch((err) => res.status(500).send({ err, message: 'Произошла ошибка' }));
+    .catch((err) => res.status(400).send({ err, message: 'Произошла ошибка' }));
 };
 
 module.exports.getUsers = async (req, res) => {
@@ -33,4 +45,16 @@ module.exports.getUsers = async (req, res) => {
   } catch (e) {
     res.status(500).send(e);
   }
+};
+
+module.exports.login = (req, res) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'secret-key', { expiresIn: '7d' });
+      res.send({ token });
+    })
+    .catch((err) => {
+      res.status(401).send({ err: err.message });
+    });
 };
